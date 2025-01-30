@@ -36,116 +36,127 @@ vector<uintptr_t> MemoryScanner(HANDLE hProcess, DWORD baseAddress, T targetValu
 
     return matchingAddresses;
 }
-void ScanMemory(HANDLE hProcess, DWORD BaseAddress) {
-    int choice;
-    cout << "Select data type to scan for:\n";
-    cout << "1. Integer\n";
-    cout << "2. Float\n";
-    cout << "3. Double\n";
-    cout << "4. Byte\n";
-    cout << "5. String\n";
-    cout << "Enter your choice: ";
-    cin >> choice;
+template <typename T>
+vector<uintptr_t> NextScanner(HANDLE hProcess, const vector<uintptr_t>& addresses, T targetValue) {
+    vector<uintptr_t> matchingAddresses;
+    SIZE_T bytesRead;
+    T value;
 
-    switch (choice) {
-    case 1: {
-        int target;
-        cout << "Enter the integer value to scan for: ";
-        cin >> target;
-        vector<uintptr_t> results = MemoryScanner<int>(hProcess, BaseAddress, target);
+    for (uintptr_t address : addresses) {
+        if (ReadProcessMemory(hProcess, reinterpret_cast<LPCVOID>(address), &value, sizeof(T), &bytesRead) && bytesRead == sizeof(T)) {
+            if (value == targetValue) {
+                matchingAddresses.push_back(address);
+            }
+        }
+    }
 
-        if (!results.empty()) {
-            cout << "Found matching addresses:\n";
-            for (uintptr_t addr : results) {
-                cout << "0x" << hex << addr << endl;
-            }
-            int resultsize = results.size();
-            cout << "Found " << resultsize << " matching addresses : \n";
-        }
-        else {
-            cout << "No matching addresses found." << endl;
-        }
-        break;
-    }
-    case 2: {
-        float target;
-        cout << "Enter the float value to scan for: ";
-        cin >> target;
-        vector<uintptr_t> results = MemoryScanner<float>(hProcess,BaseAddress, target);
+    return matchingAddresses;
+}
+vector<uintptr_t> ScanMemory(HANDLE hProcess, DWORD BaseAddress, int choice, int scanType) {
+    vector<uintptr_t> results;
+    
+    if (scanType == 1) {
+        switch (choice) {
+        case 1: {
+            int target;
+            cout << "Enter the integer value to scan for: ";
+            cin >> target;
+            results = MemoryScanner<int>(hProcess, BaseAddress, target);
 
-        if (!results.empty()) {
-            cout << "Found matching addresses:\n";
-            for (uintptr_t addr : results) {
-                cout << "0x" << hex << addr << endl;
+            if (!results.empty()) {
+                cout << "Found matching addresses:\n";
+                for (uintptr_t addr : results) {
+                    cout << "0x" << hex << addr << endl;
+                }
+                int resultsize = results.size();
+                cout << "Found " << dec << resultsize << " matching addresses : \n";
             }
-            int resultsize = results.size();
-            cout << "Found " << resultsize << " matching addresses : \n";
+            else {
+                cout << "No matching addresses found." << endl;
+            }
+            break;
         }
-        else {
-            cout << "No matching addresses found." << endl;
-        }
-        break;
-    }
-    case 3: {
-        double target;
-        cout << "Enter the double value to scan for: ";
-        cin >> target;
-        vector<uintptr_t> results = MemoryScanner<double>(hProcess,BaseAddress, target);
+        case 2: {
+            float target;
+            cout << "Enter the float value to scan for: ";
+            cin >> target;
+            results = MemoryScanner<float>(hProcess, BaseAddress, target);
 
-        if (!results.empty()) {
-            cout << "Found matching addresses:\n";
-            for (uintptr_t addr : results) {
-                cout << "0x" << hex << addr << endl;
+            if (!results.empty()) {
+                cout << "Found matching addresses:\n";
+                for (uintptr_t addr : results) {
+                    cout << "0x" << hex << addr << endl;
+                }
+                int resultsize = results.size();
+                cout << "Found " << dec << resultsize << " matching addresses : \n";
             }
-            int resultsize = results.size();
-            cout << "Found " << resultsize << " matching addresses : \n";
+            else {
+                cout << "No matching addresses found." << endl;
+            }
+            break;
         }
-        else {
-            cout << "No matching addresses found." << endl;
-        }
-        break;
-    }
-    case 4: {
-        BYTE target;
-        cout << "Enter the byte value to scan for (0-255): ";
-        int temp;
-        cin >> temp;
-        target = static_cast<BYTE>(temp);
-        vector<uintptr_t> results = MemoryScanner<BYTE>(hProcess,BaseAddress, target);
+        case 3: {
+            double target;
+            cout << "Enter the double value to scan for: ";
+            cin >> target;
+            results = MemoryScanner<double>(hProcess, BaseAddress, target);
 
-        if (!results.empty()) {
-            cout << "Found matching addresses:\n";
-            for (uintptr_t addr : results) {
-                cout << "0x" << hex << addr << endl;
+            if (!results.empty()) {
+                cout << "Found matching addresses:\n";
+                for (uintptr_t addr : results) {
+                    cout << "0x" << hex << addr << endl;
+                }
+                int resultsize = results.size();
+                cout << "Found " << dec << resultsize << " matching addresses : \n";
             }
-            int resultsize = results.size();
-            cout << "Found " << resultsize << " matching addresses : \n";
-        }
-        else {
-            cout << "No matching addresses found." << endl;
-        }
-        break;
-    }
-    case 5: {
-        string target;
-        cout << "Enter the string value to scan for: ";
-        cin >> target;
-        vector<uintptr_t> results = MemoryScanner<string>(hProcess,BaseAddress, target);
-        if (!results.empty()) {
-            cout << "Found matching addresses:" << endl;
-            for (uintptr_t addr : results) {
-                cout << "0x" << hex << addr << endl;
+            else {
+                cout << "No matching addresses found." << endl;
             }
-            int resultsize = results.size();
-            cout << "Found " << resultsize << " matching addresses : \n";
+            break;
         }
-        else {
-            cout << "No matching addresses found." << endl;
+        case 4: {
+            BYTE target;
+            cout << "Enter the byte value to scan for (0-255): ";
+            int temp;
+            cin >> temp;
+            target = static_cast<BYTE>(temp);
+            results = MemoryScanner<BYTE>(hProcess, BaseAddress, target);
+
+            if (!results.empty()) {
+                cout << "Found matching addresses:\n";
+                for (uintptr_t addr : results) {
+                    cout << "0x" << hex << addr << endl;
+                }
+                int resultsize = results.size();
+                cout << "Found " << dec << resultsize << " matching addresses : \n";
+            }
+            else {
+                cout << "No matching addresses found." << endl;
+            }
+            break;
         }
-        break;
+        case 5: {
+            string target;
+            cout << "Enter the string value to scan for: ";
+            cin >> target;
+            results = MemoryScanner<string>(hProcess, BaseAddress, target);
+            if (!results.empty()) {
+                cout << "Found matching addresses:" << endl;
+                for (uintptr_t addr : results) {
+                    cout << "0x" << hex << addr << endl;
+                }
+                int resultsize = results.size();
+                cout << "Found " << dec << resultsize << " matching addresses : \n";
+            }
+            else {
+                cout << "No matching addresses found." << endl;
+            }
+            break;
+        }
+        default:
+            cout << "Invalid choice." << endl;
+            break;
+        }
     }
-    default:
-        cout << "Invalid choice." << endl;
-        break;
-    }
+    return results;
 }
