@@ -80,12 +80,12 @@ void BackToMenu()
 	system("cls");
 
 }
-void waitforkeypress() {
+void waitforkeypress(int Key, string KeyName) {
 	bool waiting = true;
-	cout << "press F5 to go back to menu" << endl;
+	cout << "press "<< KeyName << " to go back to menu" << endl;
 	while (waiting)
 	{
-		if (GetAsyncKeyState(VK_F5))
+		if (GetAsyncKeyState(Key))
 		{
 			break;
 		}
@@ -98,6 +98,12 @@ void waitforkeypress() {
 bool is64Bit = true;
 
 int main() {
+	HWND console = GetConsoleWindow();
+	RECT ConsoleRect;
+	GetWindowRect(console, &ConsoleRect);
+	MoveWindow(console, ConsoleRect.left, ConsoleRect.top, 500, 700, TRUE);
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, 10);
 	string applicationName;
 	cout << "Enter Application Name: ";
 	getline(cin, applicationName);
@@ -173,7 +179,7 @@ int main() {
 				}
 				Sleep(1000);
 			}
-			waitforkeypress();
+			waitforkeypress(VK_F5, "F5");
 			BackToMenu();
 		}
 		else if (choice == 2) {
@@ -225,13 +231,73 @@ int main() {
 			{
 				cout << "Address Given is not valid" << endl;
 			}
-			waitforkeypress();
+			waitforkeypress(VK_F5, "F5");
 			BackToMenu();
 		}
 		else if (choice == 3) {
 			//scan memory from value
-			ScanMemory(pHandle,BaseAddress);
-			waitforkeypress();
+			vector<uintptr_t> ScanAddresses;
+			int datachoice;
+			cout << "Select data type to scan for:\n";
+			cout << "1. Integer\n";
+			cout << "2. Float\n";
+			cout << "3. Double\n";
+			cout << "4. Byte\n";
+			cout << "5. String\n";
+			cout << "Enter your choice: ";
+			cin >> datachoice;
+			ScanAddresses = ScanMemory(pHandle, BaseAddress, datachoice, 1);
+			bool pressed = false;
+			cout << "Press F2 for next scan" << endl << "Press F5 to go back to the Menu" << endl;
+			while (!GetAsyncKeyState(VK_F5)) {
+				
+				if (GetAsyncKeyState(VK_F2))
+				{
+					pressed = true;
+				}
+				if(pressed){
+					cout << "Enter Next Value To Scan For (keep data type): ";
+					string nextvalue;
+					cin >> nextvalue;
+					
+					if (datachoice == 1) {
+						int target = stoi(nextvalue);
+						ScanAddresses = NextScanner(pHandle, ScanAddresses, target);
+					}
+					if (datachoice == 2) {
+						float target = stof(nextvalue);
+						ScanAddresses = NextScanner(pHandle, ScanAddresses, target);
+					}
+					if (datachoice == 3) {
+						double target = stod(nextvalue);
+						ScanAddresses = NextScanner(pHandle, ScanAddresses, target);
+					}
+					if (datachoice == 4) {
+						BYTE target;
+						int temp;
+						const char* tempstring = nextvalue.c_str();
+						temp = stoi(tempstring);
+						target = static_cast<BYTE>(temp);
+						ScanAddresses = NextScanner(pHandle, ScanAddresses, target);
+					}
+					if (datachoice == 5) {
+						ScanAddresses = NextScanner(pHandle, ScanAddresses, nextvalue);
+					}
+					
+					for (int i = 0; i < ScanAddresses.size(); i++)
+					{
+						cout << "0x" << hex<< ScanAddresses.at(i) << endl;
+					}
+					cout << "Found " <<dec << ScanAddresses.size() << " Matching Addressses" << endl;
+					pressed = !pressed;
+				}
+				else if (!pressed)
+				{
+					Sleep(1000);
+					
+				}
+				Sleep(500);
+			}
 			BackToMenu();
 		}
 		else if (choice == 4)
@@ -246,7 +312,7 @@ int main() {
 			DWORD add2converted = strtoul(add2.c_str(), NULL, 16);
 			DWORD product = add1converted + add2converted;
 			cout << "sum of addresses: " << hex << "0x" << uppercase << product << endl;
-			waitforkeypress();
+			waitforkeypress(VK_F5, "F5");
 			BackToMenu();
 		}
 		else {
